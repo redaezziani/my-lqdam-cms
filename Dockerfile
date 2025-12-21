@@ -1,14 +1,13 @@
 # Build stage
 FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /opt/app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including dev for build)
+RUN npm ci
 
 # Copy application files
 COPY . .
@@ -19,33 +18,39 @@ RUN npm run build
 # Production stage
 FROM node:22-alpine
 
-# Install dumb-init for proper signal handling
+# Install dumb-init
 RUN apk add --no-cache dumb-init
 
-# Set working directory
 WORKDIR /opt/app
 
-# Set non-root user
+# Create strapi user
 RUN addgroup -g 1001 -S strapi && \
     adduser -S strapi -u 1001
 
-# Copy built application from builder
-COPY --from=builder --chown=strapi:strapi /opt/app .
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Create necessary directories with correct permissions
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy built files from builder
+COPY --from=builder --chown=strapi:strapi /opt/app/dist ./dist
+COPY --from=builder --chown=strapi:strapi /opt/app/build ./build
+COPY --from=builder --chown=strapi:strapi /opt/app/public ./public
+COPY --from=builder --chown=strapi:strapi /opt/app/config ./config
+COPY --from=builder --chown=strapi:strapi /opt/app/database ./database
+
+# Create necessary directories
 RUN mkdir -p /opt/app/.tmp/data && \
+    mkdir -p /opt/app/public/uploads && \
     chown -R strapi:strapi /opt/app
 
-# Switch to non-root user
 USER strapi
 
-# Expose Strapi port
 EXPOSE 1337
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD node -e "require('http').get('http://localhost:1337/_health', (r) => {process.exit(r.statusCode === 204 ? 0 : 1)})"
 
-# Start application with dumb-init
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/src/index.js"]
+CMD ["npm", "start"]
