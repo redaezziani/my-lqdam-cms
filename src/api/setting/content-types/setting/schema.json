@@ -1,0 +1,17 @@
+{
+  "kind": "collectionType",
+  "collectionName": "settings",
+  "info": {
+    "singularName": "setting",
+    "pluralName": "settings",
+    "displayName": "Settings"
+  },
+  "options": { "draftAndPublish": true },
+  "pluginOptions": { "i18n": { "localized": true } },
+  "attributes": {
+    "currency": { "type": "string", "default": "USD" },
+    "shippingCost": { "type": "decimal", "default": 0 },
+    "taxPercent": { "type": "decimal", "default": 0 },
+    "siteName": { "type": "string" }
+  }
+}
