@@ -35,10 +35,10 @@ RUN npm ci --only=production
 
 # Copy built files from builder
 COPY --from=builder --chown=strapi:strapi /opt/app/dist ./dist
-COPY --from=builder --chown=strapi:strapi /opt/app/build ./build
 COPY --from=builder --chown=strapi:strapi /opt/app/public ./public
 COPY --from=builder --chown=strapi:strapi /opt/app/config ./config
 COPY --from=builder --chown=strapi:strapi /opt/app/database ./database
+COPY --from=builder --chown=strapi:strapi /opt/app/src ./src
 
 # Create necessary directories
 RUN mkdir -p /opt/app/.tmp/data && \
