@@ -65,6 +65,32 @@ jobs:
             # Navigate to project directory
             cd ~/my-lqdam-cms || { echo "Project directory not found"; exit 1; }
 
+            # Create/Update .env file with secrets
+            cat > .env << 'EOF'
+            # Server Configuration
+            HOST=0.0.0.0
+            PORT=1337
+            NODE_ENV=production
+
+            # Security Keys
+            APP_KEYS=${{ secrets.APP_KEYS }}
+            API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
+            ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+            TRANSFER_TOKEN_SALT=${{ secrets.TRANSFER_TOKEN_SALT }}
+            ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+
+            # Database Configuration
+            DATABASE_CLIENT=sqlite
+            DATABASE_FILENAME=.tmp/data.db
+
+            # External Services
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            EOF
+
             # Login to GitHub Container Registry
             echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
