@@ -77,8 +77,10 @@ jobs:
               ls -t data/data.db.backup.* 2>/dev/null | tail -n +6 | xargs -r rm
             fi
 
-            # Create/Update .env file with secrets
-            cat > .env << 'EOF'
+            # Create .env file ONLY if it doesn't exist (preserves existing secrets)
+            if [ ! -f .env ]; then
+              echo "📝 Creating new .env file..."
+              cat > .env << 'EOF'
             # Server Configuration
             HOST=0.0.0.0
             PORT=1337
@@ -103,6 +105,9 @@ jobs:
             RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
             FRONTEND_URL=https://lqdam.com
             EOF
+            else
+              echo "✅ .env file already exists, preserving existing secrets"
+            fi
 
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
