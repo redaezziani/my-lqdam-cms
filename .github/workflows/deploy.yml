@@ -65,12 +65,24 @@ jobs:
             # Navigate to project directory
             cd ~/my-lqdam-cms || { echo "Project directory not found"; exit 1; }
 
+            # Create persistent data directories if they don't exist
+            mkdir -p data uploads
+
+            # Backup existing data before deployment
+            if [ -f data/data.db ]; then
+              echo "📦 Backing up database..."
+              cp data/data.db data/data.db.backup.$(date +%Y%m%d_%H%M%S)
+              # Keep only last 5 backups
+              ls -t data/data.db.backup.* 2>/dev/null | tail -n +6 | xargs -r rm
+            fi
+
             # Create/Update .env file with secrets
             cat > .env << 'EOF'
             # Server Configuration
             HOST=0.0.0.0
             PORT=1337
             NODE_ENV=production
+            PUBLIC_URL=https://api.lqdam.com
 
             # Security Keys
             APP_KEYS=${{ secrets.APP_KEYS }}
@@ -88,41 +100,76 @@ jobs:
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
             RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            FRONTEND_URL=https://lqdam.com
             EOF
 
             # Login to GitHub Container Registry
-            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Pull latest image
+            echo "🔄 Pulling latest Docker image..."
             docker pull ghcr.io/${{ github.repository }}:latest
 
-            # Stop and remove old container
+            # Stop and remove old container (but keep volumes)
+            echo "🛑 Stopping old container..."
             docker compose down
 
             # Start new container
+            echo "🚀 Starting new container..."
             docker compose up -d strapi
 
             # Wait for container to be healthy
-            echo "Waiting for container to start..."
-            sleep 15
+            echo "⏳ Waiting for container to start..."
+            sleep 20
 
             # Check if deployment was successful
             if docker ps | grep my-lqdam-cms | grep -q "Up"; then
-              echo "✅ Deployment successful"
+              echo "✅ Container is running"
+
+              # Wait a bit more for Strapi to fully initialize
+              sleep 10
 
               # Check health endpoint
-              if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/_health; then
+              if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/_health 2>/dev/null; then
                 echo "✅ Health check passed"
               else
-                echo "⚠️ Warning: Health check failed but container is running"
+                echo "⚠️ Health check failed, checking if Strapi is responding..."
+                # Alternative health check
+                if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/admin 2>/dev/null; then
+                  echo "✅ Strapi admin is responding"
+                else
+                  echo "❌ Strapi is not responding"
+                  docker compose logs strapi --tail=100
+                  exit 1
+                fi
               fi
 
-              # Clean up old images
+              # Show container status
+              echo "📊 Container Status:"
+              docker ps | grep my-lqdam-cms
+
+              # Verify data persistence
+              echo "💾 Checking data persistence..."
+              if [ -f data/data.db ]; then
+                echo "✅ Database file exists ($(du -h data/data.db | cut -f1))"
+              else
+                echo "⚠️ Warning: Database file not found"
+              fi
+
+              if [ -d uploads ] && [ "$(ls -A uploads 2>/dev/null)" ]; then
+                echo "✅ Uploads directory exists with files"
+              else
+                echo "ℹ️ Uploads directory is empty or doesn't exist yet"
+              fi
+
+              # Clean up old images (but NOT volumes)
+              echo "🧹 Cleaning up old Docker images..."
               docker image prune -f
+
+              echo "✅ Deployment completed successfully!"
             else
               echo "❌ Deployment failed - Container not running"
-              docker compose logs strapi --tail=50
+              docker compose logs strapi --tail=100
               exit 1
             fi
 
@@ -140,7 +187,8 @@ jobs:
             Commit: ${{ github.event.head_commit.message }}
             Author: ${{ github.event.head_commit.author.name }}
 
-            🔗 View: ${{ secrets.VPS_URL }}
+            🔗 Admin: https://api.lqdam.com/admin
+            🔗 API: https://api.lqdam.com
 
       - name: Notify deployment failure
         if: failure()
