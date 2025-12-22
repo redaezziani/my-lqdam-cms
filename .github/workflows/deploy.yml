@@ -68,7 +68,8 @@ jobs:
             # Create persistent data directories if they don't exist
             mkdir -p data uploads
 
-            # Backup existing data before deployment
+            # Backup existing database before deployment
+            # Host path: ./data/data.db maps to container: /app/.tmp/data.db
             if [ -f data/data.db ]; then
               echo "📦 Backing up database..."
               cp data/data.db data/data.db.backup.$(date +%Y%m%d_%H%M%S)
@@ -151,9 +152,11 @@ jobs:
               # Verify data persistence
               echo "💾 Checking data persistence..."
               if [ -f data/data.db ]; then
-                echo "✅ Database file exists ($(du -h data/data.db | cut -f1))"
+                echo "✅ Database file exists on host at data/data.db ($(du -h data/data.db | cut -f1))"
+                echo "   This maps to /app/.tmp/data.db inside the container"
               else
-                echo "⚠️ Warning: Database file not found"
+                echo "⚠️ Warning: Database file not found at data/data.db"
+                echo "   Container will create a new database on first run"
               fi
 
               if [ -d uploads ] && [ "$(ls -A uploads 2>/dev/null)" ]; then
