@@ -14,8 +14,8 @@ services:
     ports:
       - '1337:1337'
     volumes:
-      - ./data:/opt/app/.tmp
-      - ./uploads:/opt/app/public/uploads
+      - ./data:/app/.tmp
+      - ./uploads:/app/public/uploads
     networks:
       - strapi-network
     healthcheck:
