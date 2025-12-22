@@ -6,9 +6,13 @@
     "pluralName": "order-items",
     "displayName": "OrderItem"
   },
-  "options": { "draftAndPublish": false },
+  "options": { "draftAndPublish": false, "timestamps": true },
   "attributes": {
+    "orderNumber": { "type": "string", "required": true },
     "productName": { "type": "string", "required": true },
+    "sku": { "type": "string" },
+    "color": { "type": "string" },
+    "size": { "type": "string" },
     "variant": {
       "type": "relation",
       "relation": "manyToOne",

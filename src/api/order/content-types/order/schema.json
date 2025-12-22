@@ -8,6 +8,7 @@
   },
   "options": { "draftAndPublish": false },
   "attributes": {
+    "orderNumber": { "type": "string", "unique": true, "required": true },
     "userEmail": { "type": "string", "required": true },
     "orderItems": {
       "type": "relation",

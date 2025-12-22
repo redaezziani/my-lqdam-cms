@@ -46,6 +46,11 @@
       "type": "boolean",
       "default": false
     },
+    "orderIndex": {
+      "type": "integer",
+      "default": 0,
+      "required": false
+    },
     "variants": {
       "type": "relation",
       "relation": "oneToMany",
