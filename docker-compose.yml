@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   strapi:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-yourusername}/my-lqdam-cms:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-redaezziani}/my-lqdam-cms:latest
     container_name: my-lqdam-cms
     restart: unless-stopped
     env_file: .env
@@ -14,8 +14,10 @@ services:
     ports:
       - '1337:1337'
     volumes:
-      - ./data:/app/.tmp
-      - ./uploads:/app/public/uploads
+      # This maps host ./data to container /opt/app/.tmp
+      # Since DATABASE_FILENAME=.tmp/data.db, Strapi will save to /opt/app/.tmp/data.db
+      - ./data:/opt/app/.tmp
+      - ./uploads:/opt/app/public/uploads
     networks:
       - strapi-network
     healthcheck:
