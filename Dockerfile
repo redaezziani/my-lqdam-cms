@@ -3,7 +3,7 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install system dependencies for native modules
+# Install system dependencies
 RUN apk add --no-cache \
     python3 \
     make \
@@ -13,45 +13,32 @@ RUN apk add --no-cache \
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
 
 # Build admin panel
-ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage
 FROM node:22-alpine
 
-WORKDIR /opt/app
+WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    dumb-init \
-    wget
+# Install only runtime dependencies
+RUN apk add --no-cache dumb-init
 
-# Copy built application from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/config ./config
-COPY --from=builder /app/database ./database
-COPY --from=builder /app/src ./src
+# Copy everything from builder
+COPY --from=builder /app ./
 
 # Create necessary directories with correct permissions
-RUN mkdir -p .tmp public/uploads && \
-    chown -R node:node /opt/app
-
-# Switch to non-root user
-USER node
+RUN mkdir -p public/uploads .tmp data && \
+    chmod -R 777 .tmp data public/uploads
 
 EXPOSE 1337
-
 ENV NODE_ENV=production
 
-# Start with dumb-init for proper signal handling
+# Just start - NO building!
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "./node_modules/@strapi/strapi/bin/strapi.js", "start"]
+CMD ["npm", "start"]
