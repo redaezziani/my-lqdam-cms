@@ -67,7 +67,8 @@ jobs:
 
             # Pull latest code (including docker-compose.yml)
             echo "📥 Pulling latest code from repository..."
-            git pull origin master || { echo "Failed to pull latest code"; exit 1; }
+            git fetch origin
+            git reset --hard origin/master || { echo "Failed to update code"; exit 1; }
 
             # Create persistent data directories if they don't exist
             mkdir -p data public/uploads
