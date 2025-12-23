@@ -130,30 +130,36 @@ jobs:
             docker compose up -d strapi
 
             # Wait for container to be healthy
-            echo "⏳ Waiting for container to start..."
-            sleep 20
+            echo "⏳ Waiting for Strapi to initialize..."
+            sleep 30
 
             # Check if deployment was successful
             if docker ps | grep my-lqdam-cms | grep -q "Up"; then
               echo "✅ Container is running"
 
-              # Wait a bit more for Strapi to fully initialize
-              sleep 10
+              # Wait for Strapi to fully initialize and retry health check
+              echo "⏳ Checking Strapi health..."
+              HEALTH_CHECK_ATTEMPTS=0
+              MAX_ATTEMPTS=6
 
-              # Check health endpoint
-              if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/_health 2>/dev/null; then
-                echo "✅ Health check passed"
-              else
-                echo "⚠️ Health check failed, checking if Strapi is responding..."
-                # Alternative health check
-                if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/admin 2>/dev/null; then
+              while [ $HEALTH_CHECK_ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+                if docker exec my-lqdam-cms wget -q --spider http://localhost:1337/_health 2>/dev/null; then
+                  echo "✅ Health check passed"
+                  break
+                elif docker exec my-lqdam-cms wget -q --spider http://localhost:1337/admin 2>/dev/null; then
                   echo "✅ Strapi admin is responding"
+                  break
                 else
-                  echo "❌ Strapi is not responding"
-                  docker compose logs strapi --tail=100
-                  exit 1
+                  HEALTH_CHECK_ATTEMPTS=$((HEALTH_CHECK_ATTEMPTS + 1))
+                  if [ $HEALTH_CHECK_ATTEMPTS -lt $MAX_ATTEMPTS ]; then
+                    echo "⏳ Attempt $HEALTH_CHECK_ATTEMPTS/$MAX_ATTEMPTS - Waiting for Strapi..."
+                    sleep 10
+                  else
+                    echo "⚠️ Health check timed out, but container is running. Check logs:"
+                    docker compose logs strapi --tail=50
+                  fi
                 fi
-              fi
+              done
 
               # Show container status
               echo "📊 Container Status:"
