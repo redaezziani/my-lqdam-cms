@@ -1,10 +1,10 @@
 {
-  "kind": "collectionType",
-  "collectionName": "partners",
+  "kind": "singleType",
+  "collectionName": "partners_page",
   "info": {
-    "singularName": "partner",
-    "pluralName": "partners",
-    "displayName": "Partner"
+    "singularName": "partners-page",
+    "pluralName": "partners-pages",
+    "displayName": "Partners Page"
   },
   "options": {
     "draftAndPublish": true
@@ -24,26 +24,14 @@
         }
       }
     },
-    "description": {
-      "type": "text",
+    "content": {
+      "type": "richtext",
       "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       }
-    },
-    "link": {
-      "type": "string",
-      "required": false
-    },
-    "country": {
-      "type": "string",
-      "required": false
-    },
-    "cities": {
-      "type": "json",
-      "required": false
     }
   }
 }
