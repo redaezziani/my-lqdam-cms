@@ -2,7 +2,7 @@
   "kind": "singleType",
   "collectionName": "shipping_returns",
   "info": {
-    "singularName": "shipping-returns",
+    "singularName": "shipping-return",
     "pluralName": "shipping-returns",
     "displayName": "Shipping & Returns"
   },
