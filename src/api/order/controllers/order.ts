@@ -60,8 +60,8 @@ export default factories.createCoreController(
             );
 
             if (variant) {
-              color = variant.color?.name || '';
-              size = variant.size?.name || '';
+              color = variant.color?.label || '';
+              size = variant.size?.label || '';
             }
           }
 
