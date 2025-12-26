@@ -44,12 +44,7 @@
     },
     "lastUpdated": {
       "type": "date",
-      "required": false,
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
+      "required": false
     }
   }
 }

@@ -1,8 +1,8 @@
 /**
- * shipping-returns router
+ * shipping-return service
  */
 
 import { factories } from '@strapi/strapi';
 
 // @ts-ignore - Type will be generated after first build
-export default factories.createCoreRouter('api::shipping-returns.shipping-return');
+export default factories.createCoreService('api::shipping-return.shipping-return');
